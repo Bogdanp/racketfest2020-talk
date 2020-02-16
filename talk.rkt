@@ -34,17 +34,37 @@
 (define-syntax-rule (lib s)
   (red (code s)))
 
-(define (demo name)
+(define-syntax-rule (demo name e ...)
   (with-font "Georgia"
     (slide
      #:name (format "demo ~a" name)
-     (caps (big (t "Demo"))))))
+     (caps (big (t "Demo")))
+     e ...)))
+
+(define (comment s)
+  (define p
+    (with-font "Gill Sans"
+      (colorize
+       (small (small (small (small (apply para (map t (string-split s)))))))
+       (hexcolor "948c94"))))
+  (define bg
+    (colorize
+     (filled-rectangle (+ (pict-width p) 20)
+                       (+ (pict-height p) 20))
+     (hexcolor "f2f2f2")))
+  (cc-superimpose bg p))
 
 (with-font "Georgia"
   (slide
    (caps (big (t "Stepping up Racket")))
    (caps (big (t "for the Web")))
-   (small (t "Bogdan Popa"))))
+   (small (t "Bogdan Popa"))
+
+   (comment #<<COMMENT
+Hello everybody!  My name is Bogdan and today I'm going to talk about
+Stepping up Racket for the Web.
+COMMENT
+            )))
 
 (let ()
   (define-syntax-rule (it name description)
@@ -53,30 +73,90 @@
   (slide
    #:title "Batteries"
    (it racket "a powerful programming environment")
+   (comment #<<COMMENT
+Racket comes with an extensive set of batteries in its standard
+distribution.  First, we've got Racket itself, which is a powerful
+programming environment.
+COMMENT
+            )
+
    'next
    (it web-server-lib "a capable Web Server built for high concurrency")
+   (comment #<<COMMENT
+Next is web-server-lib, which is a capable web server built for high
+concurrency and with support for some pretty interesting features such
+as continuations.
+COMMENT
+            )
+
    'next
    (it db-lib "a DB library that supports all the major OSS RDBMS")
+   (comment #<<COMMENT
+Then there's db-lib, which has support for all the major RDBMS,
+including MySQL, PostgreSQL, SQLite3 and OracleDB.
+COMMENT
+            )
+
    'next
    (it rackunit-lib "a standardized way to test code")
-   'next
-   (it |raco exe| "an easy way to package and distribute code")))
+   (comment #<<COMMENT
+A standardized way to test code across the ecosystem with rackunit-lib.
+COMMENT
+            )
 
-(demo "matchacha")
+   'next
+   (it |raco exe| "an easy way to package and distribute code")
+   (comment #<<COMMENT
+And raco exe, which provides a convenient way to package together an
+entire application and its associated resources and then distribute it
+to a server that doesn't even have Racket installed.
+COMMENT
+            )))
+
+(demo "matchacha"
+      (comment #<<COMMENT
+My girlfriend wanted to start selling green tea online so last year I
+built an e-commerce website to support that using Racket.  Here it
+is...
+COMMENT
+               ))
 
 (let ([it (lambda (s)
             (para (t s)))])
   (slide
-   #:title "What's missing?"
+   #:title "What did I build?"
+   (comment #<<COMMENT
+So what did I have to build on top of the standard distribution to get
+all that working?  Well, a few things...
+COMMENT
+            )
+
+   'next
    (it "form validation*")
+   (comment #<<COMMENT
+First, there's form validation.  There is some support for this in the
+web-server package, but I'll talk about why that's not enough in a
+minute.
+COMMENT
+            )
+
    'next
    (it "database migrations")
+   (comment #<<COMMENT
+Then there's database migrations.  How do you manage schema versioning
+from one release to another?
+COMMENT
+            )
+
    'next
    (it "an ORM*")
+
    'next
    (it "end-to-end testing")
+
    'next
    (it "session management")
+
    'next
    (it "profiling")))
 
@@ -114,8 +194,19 @@
 (slide
  #:title "Form validation"
  (para (lib formlets) (t "come with") (lib web-server-lib) (t "but..."))
- (item (t "they couple presentation to validation"))
- (item (t "no easy way to include validation errors into the output")))
+ (vl-append
+  10
+  (item (t "they couple presentation to validation"))
+  (item (t "no easy way to include validation errors into the output"))
+  (comment #<<COMMENT
+First, let's start with form validation.  As I mentioned, there is
+support for form validation in the web-server package via formlets.
+Unfortunately, formlets have a couple of problems: because they're
+declared in line with xexpressions, they are coupled to the
+presentation and there's no easy way to extract and present validation
+errors to the user.
+COMMENT
+           )))
 
 (let ([step (make-stepper)])
   (slide
@@ -164,7 +255,39 @@
                   (code:line)
                   [(list 'passed (list username password) rw)
                    (login! username password)
-                   (redirect-to "/dashboard")])))))))))
+                   (redirect-to "/dashboard")])))))))
+
+   (comment #<<COMMENT
+That leads me to the first library that I built, which is forms-lib.
+It lets you declaratively specify how a form ought to be validated and
+what the result of that validation should be.  In the top left, I'm
+declaring a form called login-form and I'm specifying that it must
+contain a username field that's an e-mail address and is required and
+password field that is arbitrary text that is also required.  The
+result of a successful form validation is a list containing the
+username followed by the password.
+
+Separate from this declaration is a function that knows how to render
+such a form.  I'm not going to go into the details here, but the
+mechanics of how forms work make it very easy for these renderers to
+display previous form values as well as errors to the user.
+
+Finally, you use a form by running it against a request.  This
+produces three possible branches:
+
+1. either the form is in a pending state, meaning that it hasn't been
+submitted yet.  i.e. the user just landed on the page.  In that case
+we render the empty form for them.
+
+2. once they submit the form, it can be either failed or passed.  If
+it's failed, we do the same thing and render it.  The renderer that we
+previously defined will be able to display any errors to the user.
+
+3. finally, once they fix all the errors, the last state is the passed
+state in which we get back the list containing the valid username and
+password, log the user in and send them on their way.
+COMMENT
+            )))
 
 (demo "forms-lib")
 
@@ -234,7 +357,7 @@ CODE
    #:title (para (titlet "ORM:") (lib deta-lib) #:align 'center)
    #:name "deta"
    (t "An ORM without the \"R\"elational part.")
-   (vl-append
+   (vc-append
     20
     (vl-append
      -20
