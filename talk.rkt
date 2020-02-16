@@ -34,9 +34,10 @@
 (define-syntax-rule (lib s)
   (red (code s)))
 
-(define (demo)
+(define (demo name)
   (with-font "Georgia"
     (slide
+     #:name (format "demo ~a" name)
      (caps (big (t "Demo"))))))
 
 (with-font "Georgia"
@@ -61,7 +62,7 @@
    'next
    (it |raco exe| "an easy way to package and distribute code")))
 
-(demo)
+(demo "matchacha")
 
 (let ([it (lambda (s)
             (para (t s)))])
@@ -165,7 +166,7 @@
                    (login! username password)
                    (redirect-to "/dashboard")])))))))))
 
-(demo)
+(demo "forms-lib")
 
 
 ;; Database migrations ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -223,7 +224,7 @@ CODE
                        #:keep-lang-line? #f
                        )))))))
 
-(demo)
+(demo "north")
 
 
 ;; ORM ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -269,7 +270,7 @@ CODE
 (slide
  #:title (para (titlet "ORM:") (lib deta-lib) (t "cont'd.") #:align 'center)
  #:name "deta 2"
- (t "Can produce structs for arbitrary result sets. Great for analytical queries:")
+ (t "Handles arbitrary result sets. Great for analytical queries:")
  (ht-append
   10
   (pill
@@ -306,7 +307,7 @@ CODE
           (order-by ([month #:asc]))
           (project-onto orders/status/month-schema))))))))
 
-(demo)
+(demo "deta-lib")
 
 
 ;; E2E Testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -324,16 +325,73 @@ CODE
         (lambda (data)
           ...)))))))
 
-(demo)
+(demo "marionette-lib")
 
 
-;; Koyo ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; koyo ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (slide
  #:title (para (titlet "Everything else:") (lib koyo-lib) #:align 'center)
- #:name "koyo")
+ #:name "koyo"
+ (t "A set of functionality commonly needed by web applications:")
+ (item (t "Application lifecycle"))
+ (item (t "CORS"))
+ (item (t "Configuration management"))
+ (item (t "CSRF tokens"))
+ (item (t "Flash messages"))
+ (item (t "Session management"))
+ (item (t "Localization"))
+ (item (t "Profiling & more...")))
 
-(demo)
+
+;; Sessions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(slide
+ #:title (para (titlet "Session management:") (lib koyo-lib) #:align 'center)
+ #:name "koyo sessions"
+ (para (lib web-server-lib) (t "has") (code make-id-cookie) (t "..."))
+ (item (t "somewhat low level"))
+ (item (t "storing too much data in cookies slows things down")))
+
+(slide
+ #:title (para (titlet "Session management:") (lib koyo-lib) (t "cont'd.") #:align 'center)
+ #:name "koyo sessions 2"
+ (para (code koyo/session) (t "high level store for session data..."))
+ (vl-append
+  (item (para (t "stores unique session id using") (code make-id-cookie)))
+  (item (para (t "session ids map to storage backends (in-memory, Redis, etc.)")))))
+
+(demo "koyo sessions")
+
+
+;; Profiling ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(let ([step (make-stepper)])
+  (slide
+   #:title (para (titlet "Profiling:") (lib koyo-lib) #:align 'center)
+   #:name "koyo profiling"
+   (vl-append
+    20
+    (para (small (code koyo/profiler))
+          (small (t "an instrumenting profiler for web applications...")))
+    (vl-append
+     -20
+     (step "Annotate various bits of code...")
+     (pill
+      (small
+       (code
+        (define (some-fun n)
+          (with-timing (format "(some-fun ~a)" n)
+            (do-a-slow-thing n)))))))
+    (vl-append
+     -20
+     (step "See traces with timing information on every request...")
+     (pill
+      (scale-to-fit
+       (bitmap "example-profiler.png")
+       400 400))))))
+
+(demo "koyo profiling")
 
 
 ;; Fin ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -341,26 +399,22 @@ CODE
 (define (fin)
   (with-font "Georgia"
     (slide
+     #:name "fin"
      (caps (big (t "Thanks!")))
      (red (t "defn.io")))))
 
 (fin)
 
 
-;; ITT: Geolocation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ITT ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (slide
- #:title (para (titlet "Geolocation:") (lib geoip-lib) #:align 'center)
- #:name "geoip"
- )
-
-
-;; ITT: Sentry ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(slide
- #:title (para (titlet "Error monitoring:") (lib sentry-lib) #:align 'center)
- #:name "sentry"
- )
+ #:title (para (titlet "If there's time...") #:align 'center)
+ #:name "itt"
+ (small (para (code net-ip-lib) (t "utilities for working with IP networks and addrs")))
+ (small (para (code geoip-lib) (t "IP geolocation based on MaxMind's databases")))
+ (small (para (code redis-rkt) (t "fast, idiomatic Redis client library")))
+ (small (para (code sentry-lib) (t "production error monitoring"))))
 
 
 ;; Fin (for real!) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
